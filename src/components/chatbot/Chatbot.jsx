@@ -1270,7 +1270,6 @@
 
 // export default Chatbot;
 
-
 import React, { useState, useEffect, useRef } from 'react';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db, auth } from '../../firebase';
@@ -1335,6 +1334,12 @@ const Chatbot = () => {
           conditionsText += `Medications: Antacids, H2 blockers, Proton pump inhibitors\n`;
         } else if (condition.name === "Allergies") {
           conditionsText += `Medications: Cetirizine (Zyrtec), Loratadine (Claritin), Diphenhydramine (Benadryl)\n`;
+        } else if (condition.name === "Possible Heart Disease") {
+          conditionsText += `Medications: Aspirin, Statins, Beta-blockers, Nitroglycerin for chest pain\n`;
+        } else if (condition.name === "Possible Heart Failure") {
+          conditionsText += `Medications: ACE inhibitors, Beta-blockers, Diuretics, Aldosterone antagonists\n`;
+        } else if (condition.name === "Possible Arrhythmia") {
+          conditionsText += `Medications: Antiarrhythmic drugs, Blood thinners (if prescribed)\n`;
         }
 
         // Add home care tips
@@ -1345,6 +1350,12 @@ const Chatbot = () => {
           conditionsText += "Avoid lying down after meals, Elevate head during sleep, Avoid trigger foods\n";
         } else if (condition.name === "Allergies") {
           conditionsText += "Avoid allergens, Use air purifiers, Keep windows closed during high pollen seasons\n";
+        } else if (condition.name === "Possible Heart Disease") {
+          conditionsText += "Eat heart-healthy diet, Limit sodium intake, Monitor blood pressure if equipment available\n";
+        } else if (condition.name === "Possible Heart Failure") {
+          conditionsText += "Follow low-sodium diet, Daily weight monitoring, Elevate legs when sitting, Rest between activities\n";
+        } else if (condition.name === "Possible Arrhythmia") {
+          conditionsText += "Avoid caffeine and stimulants, Practice stress reduction techniques, Log episodes to share with doctor\n";
         } else {
           conditionsText += "Rest, Stay hydrated, Monitor symptoms\n";
         }
@@ -1432,6 +1443,7 @@ const Chatbot = () => {
           { id: 'digestive', text: 'Digestive (Nausea, Stomach Pain, etc.)' },
           { id: 'skin', text: 'Skin (Rash, Itching, etc.)' },
           { id: 'musculoskeletal', text: 'Muscles and Joints (Pain, Stiffness, etc.)' },
+          { id: 'cardiac', text: 'Heart-Related (Chest Pain, Palpitations, etc.)' },
           { id: 'general', text: 'General (Fever, Fatigue, etc.)' }
         ];
         break;
@@ -1503,6 +1515,18 @@ const Chatbot = () => {
               { id: 'weakness', text: 'Muscle Weakness' },
               { id: 'back_pain', text: 'Back Pain' },
               { id: 'difficulty_moving', text: 'Difficulty Moving' },
+              { id: 'add_symptom', text: 'Add More Symptoms' }
+            ];
+            break;
+          case 'cardiac':
+            newOptions = [
+              { id: 'chest_pain', text: 'Chest Pain or Discomfort' },
+              { id: 'irregular_heartbeat', text: 'Palpitations or Irregular Heartbeat' },
+              { id: 'shortness_breath', text: 'Shortness of Breath' },
+              { id: 'fatigue', text: 'Unusual Fatigue' },
+              { id: 'swelling', text: 'Swelling in Legs, Ankles or Feet' },
+              { id: 'dizziness', text: 'Dizziness or Lightheadedness' },
+              { id: 'fainting', text: 'Fainting Episodes' },
               { id: 'add_symptom', text: 'Add More Symptoms' }
             ];
             break;
@@ -1625,6 +1649,7 @@ const Chatbot = () => {
             { id: 'digestive', text: 'Digestive' },
             { id: 'skin', text: 'Skin' },
             { id: 'musculoskeletal', text: 'Muscles and Joints' },
+            { id: 'cardiac', text: 'Heart-Related' },
             { id: 'general', text: 'General' },
             { id: 'done', text: 'Done adding symptoms' }
           ];
@@ -1679,6 +1704,18 @@ const Chatbot = () => {
                 { id: 'wheezing', text: 'Wheezing' },
                 { id: 'chest_pain', text: 'Chest Pain' },
                 { id: 'sore_throat', text: 'Sore Throat' },
+                { id: 'add_symptom', text: 'Add More Symptoms' }
+              ];
+              break;
+            case 'cardiac':
+              newOptions = [
+                { id: 'chest_pain', text: 'Chest Pain or Discomfort' },
+                { id: 'irregular_heartbeat', text: 'Palpitations or Irregular Heartbeat' },
+                { id: 'shortness_breath', text: 'Shortness of Breath' },
+                { id: 'fatigue', text: 'Unusual Fatigue' },
+                { id: 'swelling', text: 'Swelling in Legs, Ankles or Feet' },
+                { id: 'dizziness', text: 'Dizziness or Lightheadedness' },
+                { id: 'fainting', text: 'Fainting Episodes' },
                 { id: 'add_symptom', text: 'Add More Symptoms' }
               ];
               break;
@@ -1955,6 +1992,74 @@ const Chatbot = () => {
       });
     }
 
+    // Heart disease detection
+    if (symptoms.includes('Chest Pain or Discomfort') || symptoms.includes('Chest Pain')) {
+      // High priority condition with chest pain
+      possibleConditions.push({
+        name: "Possible Heart Disease",
+        confidence: symptoms.includes('Shortness of Breath') ? "high" : "moderate",
+        description: "Conditions affecting the heart that may cause chest pain and other symptoms",
+        urgent: true
+      });
+      
+      // Check for more specific heart condition indicators
+      if (symptoms.includes('Shortness of Breath')) {
+        if (symptoms.includes('Fatigue or Weakness') || symptoms.includes('Unusual Fatigue')) {
+          possibleConditions.push({
+            name: "Possible Heart Failure",
+            confidence: "moderate",
+            description: "A condition where the heart doesn't pump blood as well as it should",
+            urgent: true
+          });
+        }
+      }
+      
+      if (symptoms.includes('Dizziness or Lightheadedness') || 
+          symptoms.includes('Palpitations or Irregular Heartbeat')) {
+        possibleConditions.push({
+          name: "Possible Arrhythmia",
+          confidence: "moderate",
+          description: "Abnormal heart rhythm that may be felt as palpitations or irregular heartbeat",
+          urgent: true
+        });
+      }
+    }
+
+    // Check for heart disease without chest pain
+    if (symptoms.includes('Palpitations or Irregular Heartbeat')) {
+      possibleConditions.push({
+        name: "Possible Arrhythmia",
+        confidence: "moderate",
+        description: "Abnormal heart rhythm that may be felt as palpitations or irregular heartbeat",
+        urgent: symptoms.includes('Chest Pain or Discomfort') || symptoms.includes('Fainting Episodes')
+      });
+    }
+
+    // Check for heart failure symptoms
+    if ((symptoms.includes('Shortness of Breath') && 
+        (symptoms.includes('Fatigue or Weakness') || symptoms.includes('Unusual Fatigue'))) &&
+        (symptoms.includes('Swelling') || symptoms.includes('Swelling in Legs, Ankles or Feet'))) {
+      possibleConditions.push({
+        name: "Possible Heart Failure",
+        confidence: "high",
+        description: "A condition where the heart doesn't pump blood as well as it should",
+        urgent: symptoms.includes('Chest Pain or Discomfort') || symptoms.includes('Chest Pain')
+      });
+    }
+
+    // Age-based heart disease risk
+    if (age === '65+ years' && 
+        (symptoms.includes('Shortness of Breath') || 
+         symptoms.includes('Fatigue or Weakness') ||
+         symptoms.includes('Unusual Fatigue'))) {
+      possibleConditions.push({
+        name: "Cardiovascular Disease Risk",
+        confidence: "moderate",
+        description: "Older adults with these symptoms may have increased risk of cardiovascular disease",
+        urgent: symptoms.includes('Chest Pain or Discomfort') || symptoms.includes('Chest Pain')
+      });
+    }
+
     // If no specific conditions detected but symptoms exist
     if (possibleConditions.length === 0 && symptoms.length > 0) {
       possibleConditions.push({
@@ -1974,9 +2079,11 @@ const Chatbot = () => {
     // Emergency symptoms - require immediate medical attention
     const emergencySymptoms = [
       'Chest Pain',
+      'Chest Pain or Discomfort',
       'Confusion or Disorientation',
       'Shortness of Breath',
-      'Severe Abdominal Pain'
+      'Severe Abdominal Pain',
+      'Fainting Episodes'
     ];
 
     // Urgent symptoms - should see doctor soon
@@ -1984,7 +2091,9 @@ const Chatbot = () => {
       'Fever',
       'Persistent Vomiting',
       'Severe Pain',
-      'Rash with Fever'
+      'Rash with Fever',
+      'Palpitations or Irregular Heartbeat',
+      'Swelling in Legs, Ankles or Feet'
     ];
 
     // Check for emergency symptoms
@@ -2041,6 +2150,22 @@ const Chatbot = () => {
           break;
         case "Arthritis":
           information += `   Arthritis is inflammation of one or more joints causing pain and stiffness. Osteoarthritis results from wear and tear on joints, while rheumatoid arthritis is an autoimmune condition. It affects people of all ages but is more common in older adults.\n\n`;
+          break;
+        case "Possible Heart Disease":
+          information += `   Heart disease refers to several conditions affecting the heart, including coronary artery disease, arrhythmias, heart valve disease, and heart failure. Chest pain (angina) is a common symptom that occurs when the heart muscle doesn't get enough oxygen-rich blood. Risk factors include high blood pressure, high cholesterol, smoking, diabetes, obesity, and family history.\n\n`;
+          information += `   Coronary artery disease, the most common type of heart disease, occurs when the arteries that supply blood to the heart become narrowed or blocked due to plaque buildup. This can lead to chest pain, shortness of breath, or heart attack if a coronary artery becomes completely blocked.\n\n`;
+          break;
+        case "Possible Heart Failure":
+          information += `   Heart failure occurs when the heart cannot pump efficiently enough to meet the body's needs. It doesn't mean the heart has stopped working, but that it's not working as efficiently as it should. Common causes include coronary artery disease, high blood pressure, and previous heart attacks.\n\n`;
+          information += `   Symptoms often include shortness of breath (especially when lying down), fatigue, and swelling in the legs, ankles, and feet due to fluid buildup. The condition can be managed with medications, lifestyle changes, and in some cases, devices or surgery.\n\n`;
+          break;
+        case "Possible Arrhythmia":
+          information += `   Arrhythmias are abnormal heart rhythms that can cause the heart to beat too fast, too slow, or irregularly. Many arrhythmias are harmless, but some can be serious or life-threatening. Types include atrial fibrillation, atrial flutter, supraventricular tachycardia, ventricular tachycardia, and bradycardia.\n\n`;
+          information += `   Symptoms may include palpitations (feeling of skipped beats or fluttering), dizziness, shortness of breath, chest discomfort, and in some cases fainting. Some arrhythmias increase the risk of stroke or heart failure if left untreated.\n\n`;
+          break;
+        case "Cardiovascular Disease Risk":
+          information += `   Cardiovascular disease encompasses a range of conditions affecting the heart and blood vessels. Risk increases with age and is influenced by factors such as high blood pressure, high cholesterol, smoking, diabetes, obesity, physical inactivity, and family history.\n\n`;
+          information += `   Regular screenings are important, especially for older adults. This includes blood pressure checks, cholesterol testing, and discussions with healthcare providers about appropriate screenings based on individual risk factors. Early detection and management of risk factors can significantly reduce the likelihood of developing serious cardiovascular disease.\n\n`;
           break;
         default:
         // No additional information for other conditions
@@ -2117,6 +2242,38 @@ const Chatbot = () => {
           treatment += `   - Maintaining a healthy weight\n`;
           treatment += `   - Prescription medications for moderate to severe cases\n`;
           break;
+        case "Possible Heart Disease":
+          treatment += `   - Medications: Aspirin to prevent blood clots, statins to lower cholesterol, beta-blockers to reduce heart rate and blood pressure, nitroglycerin for chest pain\n`;
+          treatment += `   - Lifestyle changes: Heart-healthy diet low in saturated fat and sodium, regular physical activity (as recommended by a doctor), quitting smoking, limiting alcohol\n`;
+          treatment += `   - Regular monitoring of blood pressure, cholesterol, and blood sugar\n`;
+          treatment += `   - For severe cases: Angioplasty with stent placement, coronary artery bypass surgery, or other procedures may be needed\n`;
+          treatment += `   - Cardiac rehabilitation programs for those recovering from heart problems or procedures\n`;
+          break;
+        case "Possible Heart Failure":
+          treatment += `   - Medications: ACE inhibitors or ARBs to lower blood pressure, beta-blockers to slow heart rate, diuretics to reduce fluid buildup, aldosterone antagonists\n`;
+          treatment += `   - Dietary changes: Reduced sodium intake (usually less than 2,000 mg daily), fluid restrictions if needed, balanced nutrition\n`;
+          treatment += `   - Regular physical activity as advised by a healthcare provider (typically structured exercise programs)\n`;
+          treatment += `   - Daily weight monitoring to detect fluid retention early\n`;
+          treatment += `   - For advanced cases: Implantable devices like pacemakers or defibrillators, ventricular assist devices, or heart transplant may be considered\n`;
+          treatment += `   - Regular follow-up with cardiologists and heart failure specialists\n`;
+          break;
+        case "Possible Arrhythmia":
+          treatment += `   - Medications: Antiarrhythmic drugs to control heart rhythm, anticoagulants (blood thinners) to prevent clots in some types of arrhythmia\n`;
+          treatment += `   - Lifestyle changes: Reducing caffeine and alcohol, managing stress, getting adequate sleep, avoiding stimulants\n`;
+          treatment += `   - Cardioversion: A procedure to restore normal heart rhythm using electrical shock or medications\n`;
+          treatment += `   - Catheter ablation: A procedure to destroy small areas of heart tissue causing abnormal rhythms\n`;
+          treatment += `   - Implantable devices: Pacemakers for slow rhythms, implantable cardioverter-defibrillators (ICDs) for dangerous fast rhythms\n`;
+          treatment += `   - Regular monitoring with a cardiologist or electrophysiologist (heart rhythm specialist)\n`;
+          break;
+        case "Cardiovascular Disease Risk":
+          treatment += `   - Regular health check-ups and screenings for blood pressure, cholesterol, and diabetes\n`;
+          treatment += `   - Heart-healthy diet: Mediterranean or DASH diet (rich in fruits, vegetables, whole grains, lean proteins, and healthy fats)\n`;
+          treatment += `   - Regular physical activity: At least 150 minutes of moderate exercise weekly, as appropriate for your fitness level\n`;
+          treatment += `   - Maintaining a healthy weight through balanced diet and regular activity\n`;
+          treatment += `   - Medications to manage risk factors if prescribed (statins, blood pressure medications, etc.)\n`;
+          treatment += `   - Stress management techniques such as meditation, deep breathing, or yoga\n`;
+          treatment += `   - Adequate sleep (7-8 hours for most adults) and good sleep hygiene\n`;
+          break;
         default:
           treatment += `   - General self-care measures include rest, hydration, and over-the-counter medications as appropriate\n`;
           treatment += `   - Consult with a healthcare provider for specific treatment recommendations\n`;
@@ -2190,6 +2347,25 @@ const Chatbot = () => {
           advice += "- Vomiting blood or material that looks like coffee grounds\n";
           advice += "- Unexplained weight loss\n";
           advice += "- Symptoms that persist despite over-the-counter medications\n\n";
+          conditionSpecificAdvice = true;
+          break;
+        case "Possible Heart Disease":
+        case "Possible Heart Failure":
+        case "Possible Arrhythmia":
+        case "Cardiovascular Disease Risk":
+          advice += "For heart-related conditions, seek IMMEDIATE emergency care if you experience:\n";
+          advice += "- Chest pain or discomfort that lasts more than a few minutes or that goes away and comes back\n";
+          advice += "- Shortness of breath with or without chest discomfort\n";
+          advice += "- Pain or discomfort in one or both arms, the back, neck, jaw, or stomach\n";
+          advice += "- Cold sweat, nausea, or lightheadedness\n";
+          advice += "- Sudden severe weakness or fainting\n\n";
+          advice += "These could be signs of a heart attack and require IMMEDIATE emergency medical attention - call emergency services (911/999/112).\n\n";
+          advice += "For less urgent but concerning heart symptoms, consult a doctor within 24-48 hours if you experience:\n";
+          advice += "- New or worsening palpitations\n";
+          advice += "- Increasing shortness of breath, especially with minimal activity\n";
+          advice += "- Worsening swelling in your legs, ankles or feet\n";
+          advice += "- Unexplained fatigue or weakness\n";
+          advice += "- Dizziness that is persistent or recurrent\n\n";
           conditionSpecificAdvice = true;
           break;
       }
