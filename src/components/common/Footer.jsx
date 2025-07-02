@@ -1,24 +1,36 @@
-// src/components/common/Footer.js
-
 import React from 'react';
-import './CommonStyles.css';
+import '../../styles/common.css';
 
 const Footer = () => {
   return (
-    <footer className="app-footer">
-      <div className="footer-content">
-        <p>&copy; {new Date().getFullYear()} HealthAI Assistant. All rights reserved.</p>
-        <div className="footer-links">
-          <a href="#privacy">Privacy Policy</a>
-          <a href="#terms">Terms of Service</a>
-          <a href="#disclaimer">Medical Disclaimer</a>
+    <footer className="footer">
+      <div className="footer-container">
+        <div className="footer-content">
+          <div className="footer-section">
+            <h3>HealthChatAI</h3>
+            <p>Your personal AI health assistant for symptom analysis and guidance.</p>
+          </div>
+          
+          <div className="footer-section">
+            <h3>Quick Links</h3>
+            <ul className="footer-links">
+              <li><a href="/">Home</a></li>
+              <li><a href="/dashboard">Dashboard</a></li>
+              <li><a href="/chat">Start Chat</a></li>
+            </ul>
+          </div>
+          
+          <div className="footer-section">
+            <h3>Important</h3>
+            <p className="disclaimer">
+              This application is for informational purposes only and is not a substitute for professional medical advice, diagnosis, or treatment.
+            </p>
+          </div>
         </div>
-      </div>
-      <div className="medical-disclaimer">
-        <p>
-          <strong>Important:</strong> This application provides general information only and is not intended to replace 
-          professional medical advice. Always consult with a qualified healthcare provider for medical concerns.
-        </p>
+        
+        <div className="footer-bottom">
+          <p>&copy; {new Date().getFullYear()} HealthChatAI. All rights reserved.</p>
+        </div>
       </div>
     </footer>
   );

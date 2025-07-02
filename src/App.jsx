@@ -1,53 +1,125 @@
-// src/App.jsx
+// src/App.js
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from './firebase';
-import Navbar from './components/common/Navbar';
-import Footer from './components/common/Footer';
+import { auth } from './services/firebase';
+
+// Auth components
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';
+import PasswordReset from './components/auth/PasswordReset';
+
+// Main components
 import Dashboard from './components/dashboard/Dashboard';
-import Chatbot from './components/chatbot/Chatbot';
-import Profile from './components/profile/Profile';
+import ChatInterface from './components/chatbot/ChatInterface';
+import UserProfile from './components/profile/UserProfile';
+import EditProfile from './components/profile/EditProfile';
+
+// Common components
+import Navbar from './components/common/Navbar';
+import Footer from './components/common/Footer';
+import ProtectedRoute from './components/common/ProtectedRoute';
+import LoadingSpinner from './components/common/LoadingSpinner';
+
+// Styles
 import './App.css';
 
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  // Keep this useEffect hook in the same position
+  
+  // Listen for auth state changes
   useEffect(() => {
-    console.log("Auth state monitoring started");
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      console.log("Auth state changed:", currentUser ? `User logged in: ${currentUser.uid}` : "No user");
       setUser(currentUser);
       setLoading(false);
     });
-
+    
+    // Cleanup subscription on unmount
     return () => unsubscribe();
   }, []);
-
-  // Render loading state
+  
   if (loading) {
-    return <div className="loading-app">Loading...</div>;
+    return <LoadingSpinner />;
   }
-
-  // Render main app
+  
   return (
     <Router>
-      <div className="app-container">
+      <div className="app">
         <Navbar user={user} />
+        
         <main className="main-content">
           <Routes>
-            <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login />} />
-            <Route path="/register" element={user ? <Navigate to="/dashboard" /> : <Register />} />
-            <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" />} />
-            <Route path="/chat" element={user ? <Chatbot /> : <Navigate to="/login" />} />
-            <Route path="/profile" element={user ? <Profile /> : <Navigate to="/login" />} />
-            <Route path="/" element={user ? <Navigate to="/dashboard" /> : <Navigate to="/login" />} />
+            {/* Public routes */}
+            <Route 
+              path="/login" 
+              element={user ? <Navigate to="/dashboard" /> : <Login />} 
+            />
+            <Route 
+              path="/register" 
+              element={user ? <Navigate to="/dashboard" /> : <Register />} 
+            />
+            <Route 
+              path="/reset-password" 
+              element={user ? <Navigate to="/dashboard" /> : <PasswordReset />} 
+            />
+            
+            {/* Protected routes */}
+            <Route 
+              path="/dashboard" 
+              element={
+                <ProtectedRoute user={user}>
+                  <Dashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/chat" 
+              element={
+                <ProtectedRoute user={user}>
+                  <ChatInterface />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/chat/:sessionId" 
+              element={
+                <ProtectedRoute user={user}>
+                  <ChatInterface />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/profile" 
+              element={
+                <ProtectedRoute user={user}>
+                  <UserProfile />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/profile/edit" 
+              element={
+                <ProtectedRoute user={user}>
+                  <EditProfile />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Default route */}
+            <Route 
+              path="/" 
+              element={user ? <Navigate to="/dashboard" /> : <Navigate to="/login" />} 
+            />
+            
+            {/* Catch all - redirect to dashboard or login */}
+            <Route 
+              path="*" 
+              element={user ? <Navigate to="/dashboard" /> : <Navigate to="/login" />} 
+            />
           </Routes>
         </main>
+        
         <Footer />
       </div>
     </Router>

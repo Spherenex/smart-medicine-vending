@@ -1,61 +1,57 @@
 // src/components/chatbot/ChatMessage.jsx
-
 import React from 'react';
-import './ChatStyles.css';
+import '../../styles/chatbot.css';
 
 const ChatMessage = ({ message }) => {
-  // Format timestamp if it exists
-  const formattedTime = message.timestamp ? 
-    message.timestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
-  
-  // Function to highlight medication names and information
-  const formatMedicationText = (text) => {
-    if (!text) return '';
+  // Format timestamp
+  const formatTime = (timestamp) => {
+    if (!timestamp) return '';
     
-    // Split the text by lines to process paragraph by paragraph
-    const paragraphs = text.split('\n').map(paragraph => {
-      // Check if this paragraph contains medication information
-      if (/\b(medication|tablet|capsule|pill|drug|dose|dosage|mg|ml|treatment|prescri)\b/i.test(paragraph)) {
-        return `<p class="medication-highlight">${paragraph}</p>`;
-      }
-      return `<p>${paragraph}</p>`;
-    });
-    
-    return paragraphs.join('');
+    const date = timestamp instanceof Date ? timestamp : timestamp.toDate();
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
   
-  return (
-    <div className={`message ${message.sender}-message`}>
-      <div className="message-content">
-        {message.sender === 'bot' ? (
-          <div dangerouslySetInnerHTML={{ 
-            __html: formatMedicationText(message.text) 
-          }} />
-        ) : (
-          message.text
-        )}
-      </div>
-      
-      {message.suggestions && message.suggestions.length > 0 && (
-        <div className="message-suggestions">
-          <div className="suggestion-chips">
-            {message.suggestions.map((suggestion, index) => (
-              <button key={index} onClick={() => {
-                // Set the input field to this suggestion
-                const inputField = document.querySelector('.chatbot-input-form input');
-                if (inputField) {
-                  inputField.value = suggestion;
-                  inputField.focus();
-                }
-              }}>
-                {suggestion}
-              </button>
-            ))}
+  // Handle typing indicator
+  if (message.isTyping) {
+    return (
+      <div className="message bot-message">
+        <div className="message-content">
+          <div className="typing-indicator">
+            <span></span>
+            <span></span>
+            <span></span>
           </div>
         </div>
-      )}
-      
-      {formattedTime && <div className="message-time">{formattedTime}</div>}
+      </div>
+    );
+  }
+  
+  // Handle system messages
+  if (message.isSystem) {
+    return (
+      <div className="message system-message">
+        <div className="message-content">
+          {message.content}
+        </div>
+        <div className="message-time">{formatTime(message.timestamp)}</div>
+      </div>
+    );
+  }
+  
+  // Handle regular user or bot messages
+  return (
+    <div className={`message ${message.isUser ? 'user-message' : 'bot-message'}`}>
+      <div className="message-avatar">
+        {message.isUser ? (
+          <div className="user-avatar">U</div>
+        ) : (
+          <div className="bot-avatar">AI</div>
+        )}
+      </div>
+      <div className="message-content">
+        {message.content}
+        <div className="message-time">{formatTime(message.timestamp)}</div>
+      </div>
     </div>
   );
 };

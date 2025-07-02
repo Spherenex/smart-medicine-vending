@@ -1,70 +1,118 @@
+// src/components/auth/Login.jsx
 import React, { useState } from 'react';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../../firebase';
-import { useNavigate } from 'react-router-dom';
-import './AuthStyles.css';
+import { Link, useNavigate } from 'react-router-dom';
+import { loginUser } from '../../services/authService';
+import '../../styles/auth.css';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  
   const navigate = useNavigate();
-
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError('');
-
+    
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      setError('');
+      setLoading(true);
+      
+      await loginUser(email, password);
+      
+      // Redirect to dashboard
       navigate('/dashboard');
     } catch (error) {
-      setError('Failed to log in. Please check your credentials.');
-      console.error(error);
+      console.error('Login error:', error);
+      
+      // Handle different error codes
+      switch(error.code) {
+        case 'auth/user-not-found':
+        case 'auth/wrong-password':
+          setError('Invalid email or password');
+          break;
+        case 'auth/too-many-requests':
+          setError('Too many failed login attempts. Please try again later');
+          break;
+        default:
+          setError('Failed to log in. Please try again');
+      }
     } finally {
       setLoading(false);
     }
   };
-
+  
   return (
-    <div className="login-container">
-      <h2>Sign In to Your Health Account</h2>
-      {error && <p className="error-message">{error}</p>}
-      
-      <form onSubmit={handleSubmit} className="login-form">
-        <div className="form-group">
-          <label>Email</label>
-          <input 
-            type="email" 
-            value={email} 
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </div>
+    <div className="auth-container">
+      <div className="auth-form-container">
+        <h2>Login to Your Account</h2>
+        <p className="auth-subtitle">Enter your credentials to access your health assistant</p>
         
-        <div className="form-group">
-          <label>Password</label>
-          <input 
-            type="password" 
-            value={password} 
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
+        {error && <div className="auth-error">{error}</div>}
         
-        <button 
-          type="submit" 
-          className="login-button" 
-          disabled={loading}
-        >
-          {loading ? 'Signing In...' : 'Sign In'}
-        </button>
-      </form>
+        <form onSubmit={handleSubmit} className="auth-form">
+          <div className="form-group">
+            <label htmlFor="email">Email</label>
+            <input
+              type="email"
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              placeholder="Enter your email"
+            />
+          </div>
+          
+          <div className="form-group">
+            <label htmlFor="password">Password</label>
+            <input
+              type="password"
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              placeholder="Enter your password"
+            />
+          </div>
+          
+          <div className="form-footer">
+            <Link to="/reset-password" className="forgot-password">
+              Forgot password?
+            </Link>
+          </div>
+          
+          <button 
+            type="submit" 
+            className="auth-button"
+            disabled={loading}
+          >
+            {loading ? 'Logging in...' : 'Log In'}
+          </button>
+        </form>
+        
+        <div className="auth-redirect">
+          Don't have an account?{' '}
+          <Link to="/register" className="auth-link">
+            Sign up
+          </Link>
+        </div>
+      </div>
       
-      <p className="register-link">
-        Don't have an account? <a href="/register">Register here</a>
-      </p>
+      <div className="auth-info">
+        <h3>Your Health Assistant</h3>
+        <p>
+          Log in to access your personal health assistant powered by AI. 
+          Describe your symptoms, get instant analysis, and receive personalized 
+          health suggestions.
+        </p>
+        <ul className="auth-features">
+          <li>Symptom analysis and condition detection</li>
+          <li>Personalized home care tips</li>
+          <li>Health insights and guidance</li>
+          <li>Secure and private health tracking</li>
+        </ul>
+      </div>
     </div>
   );
 };
